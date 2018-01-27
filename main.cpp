@@ -24,19 +24,30 @@ int main(int argc, char *argv[])
 
     createVertexArray(facet, vertices);
 
+    // calculate scaling factors along X, Y and Z
+    float scale_x = (x_max - x_min)/2.0;
+    float scale_y = (y_max - y_min)/2.0;
+    float scale_z = (z_max - z_min)/2.0;
 
+    float scale_0 = scale_x;
+    if (scale_y > scale_0) scale_0 = scale_y;
+    if (scale_z > scale_0) scale_0 = scale_z;
+    float scale = 2.0 * scale_0;    // initial scale
+    float scale_delta = 0.10 * scale_0;
     QApplication app(argc, argv);
 
     MyGLDrawer window;
     window.facet = facet;
-    window.vertices = vertices;
+    window.vertices = vertices; // need?
+    window.scale = scale;
+    window.scale_delta = scale_delta;
     window.x_min=x_min;
     window.x_max=x_max;
     window.y_min=y_min;
     window.y_max=y_max;
     window.z_min=z_min;
     window.z_max=z_max;
-    window.setWindowTitle("QT OpenGL - Lesson 1");
+    window.setWindowTitle("STL viewer");
     window.setGeometry(100,100,500,500);
     window.show();
     window.setMouseTracking(true);

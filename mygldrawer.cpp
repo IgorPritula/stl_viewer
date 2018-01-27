@@ -49,12 +49,32 @@ void MyGLDrawer::paintGL()
 
 }
 
-void MyGLDrawer::mouseMoveEvent(QMouseEvent *me)
+void MyGLDrawer::wheelEvent(QWheelEvent * event) {
+    if (event->orientation() == Qt::Vertical) {
+        int numDegrees = event->delta() / 8;
+        int numSteps = numDegrees / 15;
+        scale -= scale_delta * numSteps;
+        updateGL();
+    }
+}
+
+void MyGLDrawer::mousePressEvent(QMouseEvent *event)
 {
-    // Get cursor coordinates
-    cax=me->x();
-    cay=me->y();
-    //updateGL();
+    lastPos = event->pos();
+}
+
+void MyGLDrawer::mouseMoveEvent(QMouseEvent *event)
+{
+    if (event->buttons() & Qt::LeftButton) {
+        GLfloat dx = (GLfloat)(event->x() - lastPos.x());
+      GLfloat dy = (GLfloat)(event->y() - lastPos.y());
+      rotationX = rotationX + (GLfloat)(dy / 2);
+      if (rotationX > 90) rotationX = 90;
+      if (rotationX < -90) rotationX = -90;
+      rotationY = fmod(rotationY + (GLfloat)(dx / 2), 360);
+      updateGL();
+    }
+    lastPos = event->pos();
 }
 
 void MyGLDrawer::drawGeometry() {
@@ -63,10 +83,10 @@ void MyGLDrawer::drawGeometry() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glScalef(1.0/2,1.0/2,1.0/2);
-    glRotatef(21, 1.0, 0.0, 0.0);
-    glRotatef(10, 0.0, 1.0, 0.0);
-    glRotatef(5, 0.0, 0.0, 1.0);
+    glScalef(1.0/scale,1.0/scale,1.0/scale);
+    glRotatef(rotationX, 1.0, 0.0, 0.0);
+    glRotatef(rotationY, 0.0, 1.0, 0.0);
+    glRotatef(rotationZ, 0.0, 0.0, 1.0);
 
     glTranslatef(-(x_max + x_min)/2.0f,-(y_max + y_min)/2.0f,-(z_max + z_min)/2.0f);
     const int NUM_FACETS = facet.size();

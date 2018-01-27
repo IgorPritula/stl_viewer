@@ -19,17 +19,22 @@ public:
     float y_max;
     float z_min;
     float z_max;
+    float scale = 1;
+    float scale_delta = 0.1;
     GLfloat rotationX = 0;
     GLfloat rotationY = 0;
     GLfloat rotationZ = 0;
+    int rotationSpeed = 1;
     void drawGeometry();
 protected:
     int cax, cay, cbx, cby;
     void initializeGL();
     void resizeGL(int w, int h);
     void paintGL();
-
+    QPoint lastPos;
+    void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *me);
+    void wheelEvent(QWheelEvent * event);
 };
 
 #endif // MYGLDRAWER_H
