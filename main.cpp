@@ -6,19 +6,23 @@ int main(int argc, char *argv[])
 {
 
     if(argc < 2)
-        {
-            std::cout << "Spesify the name of STL file\n";
-            return 1;
-        }
+    {
+        std::cout << "Spesify the name of STL file.\n";
+        return 1;
+    }
     // get the name of the STL file (command line input)
     std::string STL_filename = argv[1];
 
-    int error = read_ascii_STL_file(STL_filename,facet,x_min,x_max,y_min,y_max,z_min,z_max);
+    if(STL_filename.substr(STL_filename.find_last_of(".") + 1) != "stl") {
+      std::cout << "File has wrong extension. Please, provide STL file.\n" << std::endl;
+      return 1;
+    }
 
+    int error = read_ascii_STL_file(STL_filename,facet,x_min,x_max,y_min,y_max,z_min,z_max);
     // if something goes wrong, the above function will return a value of 1
     if (error == 1)
     {
-        return(1);// exit returning an error
+        return 1;
     }
     float* vertices = new float[facet.size()*30];
 
