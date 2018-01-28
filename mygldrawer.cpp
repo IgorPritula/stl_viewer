@@ -2,8 +2,13 @@
 
 MyGLDrawer::MyGLDrawer(QWidget *parent) : QGLWidget(parent){}
 
+const std::string MyGLDrawer::DISPLAY_SHAPE = "shape";
+const std::string MyGLDrawer::DISPLAY_HISTOGRAM = "histogram";
+
 void MyGLDrawer::initializeGL()
 {
+    getHistogramData();
+
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     initializeGLFunctions();
     qglClearColor(Qt::white);
@@ -22,19 +27,26 @@ void MyGLDrawer::initializeGL()
 void MyGLDrawer::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
-    //glMatrixMode(GL_PROJECTION);
-   // glLoadIdentity();
-    //GLfloat x = (GLfloat)w / h;
-    //glFrustum(-x, x, -1.0, 1.0, 4.0, 15.0);
-    //glMatrixMode(GL_MODELVIEW);
+
 }
 
 void MyGLDrawer::paintGL()
 {
-    drawGeometry();
+    if (display == DISPLAY_SHAPE) {
+        glEnable(GL_LIGHTING);
+        drawGeometry();
+    }
+    if (display == DISPLAY_HISTOGRAM) {
+       glDisable(GL_LIGHTING);
+       drawHistogram();
+    }
+
 }
 
 void MyGLDrawer::wheelEvent(QWheelEvent * event) {
+    if(display == DISPLAY_HISTOGRAM) {
+        return;
+    }
     if (event->orientation() == Qt::Vertical) {
         int numDegrees = event->delta() / 8;
         int numSteps = numDegrees / 15;
@@ -45,11 +57,26 @@ void MyGLDrawer::wheelEvent(QWheelEvent * event) {
 
 void MyGLDrawer::mousePressEvent(QMouseEvent *event)
 {
-    lastPos = event->pos();
+    if (event->buttons() & Qt::LeftButton) {
+        lastPos = event->pos();
+    }
+    if (event->buttons() & Qt::RightButton) {
+        if (display == DISPLAY_SHAPE) {
+            display = DISPLAY_HISTOGRAM;
+        }
+        else  {
+            display = DISPLAY_SHAPE;
+        }
+        updateGL();
+    }
+
 }
 
 void MyGLDrawer::mouseMoveEvent(QMouseEvent *event)
 {
+    if(display == DISPLAY_HISTOGRAM) {
+        return;
+    }
     if (event->buttons() & Qt::LeftButton) {
         GLfloat dx = (GLfloat)(event->x() - lastPos.x());
         GLfloat dy = (GLfloat)(event->y() - lastPos.y());
@@ -84,5 +111,65 @@ void MyGLDrawer::drawGeometry() {
       }
       glEnd();
     }
-
 }
+
+void MyGLDrawer::getHistogramData() {
+    double axleZ[3] = {0.0, 0.0, 1.0};
+
+    std::map<int, double> degrees_count;
+    for(int i = 0; i < facet.size(); i++) {
+        double nx = facet[i].normal.x;
+        double ny = facet[i].normal.y;
+        double nz = facet[i].normal.z;
+        double scal = nx * axleZ[0] + ny * axleZ[1] + nz * axleZ[2];
+        double axleL = sqrt(pow(axleZ[0],2) + pow(axleZ[1],2) + pow(axleZ[2], 2));
+        double nL = sqrt(pow(nx,2) + pow(ny,2) + pow(nz,2));
+        double cosL = scal / (axleL * nL);
+
+        int degrees = (int)(acos (cosL) * 180.0 / M_PI);
+        degrees = 90 - degrees;
+
+        double area = sqrt(pow(nx,2) + pow(ny,2) + pow(nz, 2)) / 2;
+
+        if (degrees_count.find(degrees) == degrees_count.end()) {
+            degrees_count[degrees] = area;
+        }
+        else {
+            degrees_count[degrees] += area;
+        }
+
+        if(degrees_count[degrees] > max_tringle_area) {
+            max_tringle_area = degrees_count[degrees];
+        }
+    }
+
+    histogramData = degrees_count;
+}
+
+void MyGLDrawer::drawHistogram() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glBegin(GL_LINES);
+    glColor3f(0.0f, 0.0f, 0.0f);
+        glVertex2f(-0.99f, -0.99f);
+        glVertex2f( 0.99f, -0.99f);
+    glEnd();
+
+    glBegin(GL_LINES);
+    glColor3f(0.0f, 0.0f, 0.0f);
+        glVertex2f(-0.99f, -0.99f);
+        glVertex2f(-0.99f, 0.99f);
+    glEnd();
+
+    for (const auto& elem : histogramData) {
+        glBegin(GL_LINES);
+        glColor3f(1.0f, 0.0f, 0.0f);
+            glVertex2f((float)elem.first * 0.01f, -0.99f);    // x, y
+            glVertex2f((float)elem.first * 0.01f, (elem.second / (max_tringle_area / 0.99f)) - 0.99f);
+        glEnd();
+    }
+}
+

@@ -26,6 +26,13 @@ public:
     GLfloat rotationZ = 0;
     int rotationSpeed = 1;
     void drawGeometry();
+    double max_tringle_area = 0.0;
+    void getHistogramData();
+    void drawHistogram();
+    std::string display = "shape";
+    static const std::string DISPLAY_SHAPE;
+    static const std::string DISPLAY_HISTOGRAM;
+    std::map<int, double> histogramData;
 protected:
     int cax, cay, cbx, cby;
     void initializeGL();
