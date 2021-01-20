@@ -1,7 +1,7 @@
 # stl_viewer
 Program implemented with QGLWidget on Linux.
 
-Program except 1 parameter - STL file name
+Program except 1 parameter - STL file name (ASCII only)
 For ex:
 ./STL_viewer ../stl_files/bunny.stl
 
